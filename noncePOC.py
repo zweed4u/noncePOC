@@ -15,9 +15,9 @@ class Config:
     # Pull user info 
     binNeeded = c.get('nonce','binNeeded')
     runEnabler = c.get('nonce','runEnabler')
-
-    ip = c.get('ssh', 'ip')
-    sshPass = c.get('ssh','password')
+    iosIp = c.get('ssh', 'iosIp')
+    iosSshPass = c.get('ssh','iosPassword')
+    localPass = c.get('ssh','localPassword')
     poc = c.get('POC', 'showPOC')
     blobPath = c.get('shsh2', 'pathToBlob')
 
@@ -51,65 +51,67 @@ if user_config.binNeeded.lower() == 'true':
 					f.write(chunk)
 
 		print 'SSHing into device using config vals...'
-		local_ssh = SSH(user_config.ip, 22, 'root', user_config.sshPass)
-		local_ssh.connect()
-		scp = SCPClient(local_ssh.ssh.get_transport())
+		ios_ssh = SSH(user_config.iosIp, 22, 'root', user_config.iosSshPass)
+		ios_ssh.connect()
+		scp = SCPClient(ios_ssh.ssh.get_transport())
 
 		print 'SCPing downloaded binary to device...'
 		scp.put(os.path.join(rootDirectory, local_filename))
 
 		print 'Setting nonceEnabler permissions...'
-		stdin, stdout, stderr = local_ssh.ssh.exec_command('chmod +x '+local_filename)
+		stdin, stdout, stderr = ios_ssh.ssh.exec_command('chmod +x '+local_filename)
 		for i in stdout.readlines():
 			print i
 
 		print 'Running nonceEnabler...'
-		stdin, stdout, stderr = local_ssh.ssh.exec_command('./'+local_filename)
+		stdin, stdout, stderr = ios_ssh.ssh.exec_command('./'+local_filename)
 		for i in stdout.readlines():
 			print i
 
 		print 'Setting nvram generator variable for boot-nonce...'
-		stdin, stdout, stderr = local_ssh.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
+		stdin, stdout, stderr = ios_ssh.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
 		for i in stdout.readlines():
 			print i
 
 		print 'Ensuring nvram variable was written...'
-		stdin, stdout, stderr = local_ssh.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
+		stdin, stdout, stderr = ios_ssh.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
 		for i in stdout.readlines():
 			print i # assert that the variable written matches the generator
 
 if user_config.runEnabler.lower() == 'true':
 	print 'SSHing into device using config vals...'
-	local_ssh = SSH(user_config.ip, 22, 'root', user_config.sshPass)
-	local_ssh.connect()
+	ios_ssh = SSH(user_config.iosIp, 22, 'root', user_config.iosSshPass)
+	ios_ssh.connect()
 
 	print 'Setting nonceEnabler permissions...'
-		stdin, stdout, stderr = local_ssh.ssh.exec_command('chmod +x '+local_filename)
+		stdin, stdout, stderr = ios_ssh.ssh.exec_command('chmod +x '+local_filename)
 		for i in stdout.readlines():
 			print i
 
 	print 'Running nonceEnabler...'
-	stdin, stdout, stderr = local_ssh.ssh.exec_command('./'+local_filename)
+	stdin, stdout, stderr = ios_ssh.ssh.exec_command('./'+local_filename)
 	for i in stdout.readlines():
 		print i
 
 	print 'Setting nvram generator variable for boot-nonce...'
-	stdin, stdout, stderr = local_ssh.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
+	stdin, stdout, stderr = ios_ssh.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
 	for i in stdout.readlines():
 		print i
 
 	print 'Ensuring nvram variable was written...'
-	stdin, stdout, stderr = local_ssh.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
+	stdin, stdout, stderr = ios_ssh.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
 	for i in stdout.readlines():
 		print i # assert that the variable written matches the generator
 
 
+#need to terminate ios ssh session
 if user_config.poc.lower() == 'true':
-	#need local ssh session
-	#img4tool -s blobPath | grep BNCH - this is our nonce - store in bnchNonce
+	local_ssh = SSH('127.0.0.1', 22, os.getlogin(), user_config.localPass)
+	local_ssh.connect()
+	bnchNonce = str(local_ssh.ssh.exec_command('img4tool -s '+blobPath+' | grep BNCH')).split('BNCH: ')[2] #Format - BNCH: BNCH: (NONCE HERE)
 	print 'Connect your idevice in its jailbroken state - nonce should already have been set by enabler'
-	#sudo noncestatistics -t 1 test.txt | grep ApNonce - this is the nonce on the device 
-
+	deviceNonce = str(local_ssh.ssh.exec_command('sudo noncestatistics -t 1 test.txt | grep ApNonce')).split('=')[1] #log in as root or password will be needed
+	assert deviceNonce == bnchNonce, "Error Message: Nonces do not match!"
 
 print 'Ensure that you are currently in a jailbroken state and that you have the blobs.'
 print 'Visit jbme.qwertyoruiop.com on your device for tfp0'

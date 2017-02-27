@@ -8,8 +8,9 @@ binNeeded = False #Used to determine if nonceEnabler is needed to be downloaded 
 runEnabler = True #Used to determine if you need to run nonceEnabler and set your generator in your nvram - this will almost always be true
 
 [ssh]
-ip = #192.168.0.1 (phone ip address) Preferences > Wi-Fi > (i) > IP Address
-password = #alpine (default) ssh loopback password for login
+iosIp = #192.168.0.1 (phone ip address) Preferences > Wi-Fi > (i) > IP Address
+iosPassword = #alpine (default) ios ssh password for login
+localPassword = password #ssh loopback password for login to 127.0.0.1
 
 [POC]
 showPOC = True #Used to show the boot nonce is correctly set and that on reboot the device has booted with specified nonce
