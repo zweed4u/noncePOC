@@ -1,0 +1,15 @@
+# Modify this file and save it as config.cfg
+
+[shsh2]
+pathToBlob = /home/JohnDoe/Desktop/SHSH2/myblob.shsh2 #Full path to shsh2 file
+
+[nonce]
+binNeeded = False #Used to determine if nonceEnabler is needed to be downloaded and put on your device
+runEnabler = True #Used to determine if you need to run nonceEnabler and set your generator in your nvram - this will almost always be true
+
+[ssh]
+ip = #192.168.0.1 (phone ip address) Preferences > Wi-Fi > (i) > IP Address
+password = #alpine (default) ssh loopback password for login
+
+[POC]
+showPOC = True #Used to show the boot nonce is correctly set and that on reboot the device has booted with specified nonce
