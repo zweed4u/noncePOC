@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # make use of config - ssh credentials and path to blob and if nonceEnabler is needed
 # dependency check/install tihmstar stuff 
 import os, sys, time, datetime, requests, paramiko, ConfigParser
@@ -74,7 +73,11 @@ def nvramWrite(iOSSession, generator, binaryFileName=None):
 
 	print str(datetime.datetime.now())+' :: Ensuring nvram variable was written...'
 	stdin, stdout, stderr = iOSSession.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
-	print color.CYAN+str(stdout.read())+color.END # assert that the variable written matches the generator
+	nvramOutput=str(stdout.read())
+	print color.CYAN+nvramOutput+color.END # assert that the variable written matches the generator
+	nvramVar = nvramOutput.split('com.apple.System.boot-nonce')[1].split('\t')[1].split('\n')[0]
+	assert nvramVar == generator, "Error Message: Expected ["+generator+"] but ["+nvramVar+"] was written to nvram."
+	print str(datetime.datetime.now())+' :: nvram assertion passed...'
 
 for line in open(user_config.blobPath, 'r'):
 	if '<string>0x' in line: # ensure that each generator follows the same pattern (hex 0x and xml-esque <>__<>)
