@@ -138,6 +138,6 @@ if user_config.poc.lower() == 'true':
 		print color.CYAN+line+color.END 
 
 	print str(datetime.datetime.now())+' :: Nonce pulled from device: '+ deviceNonce 
-	print str(datetime.datetime.now())+' :: Nonce pulled from shsh2: '+ bnchNonce 
+	print str(datetime.datetime.now())+' :: Nonce pulled from shsh2:  '+ bnchNonce 
 	assert str(bnchNonce) in str(deviceNonce), "Error Message: Nonces do not match! Nonce from device is "+deviceNonce+' and nonce of blob used is '+bnchNonce
 	print str(datetime.datetime.now())+' :: nonce assertion passed with '+deviceNonce
