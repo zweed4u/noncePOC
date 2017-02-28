@@ -37,6 +37,18 @@ class SSH:
 	def connect(self):
 		SSH.ssh.connect(self.address, self.port, self.user, self.passwd)
 
+class color:
+		PURPLE = '\033[95m'
+		CYAN = '\033[96m'
+		DARKCYAN = '\033[36m'
+		BLUE = '\033[94m'
+		GREEN = '\033[92m'
+		YELLOW = '\033[93m'
+		RED = '\033[91m'
+		BOLD = '\033[1m'
+		UNDERLINE = '\033[4m'
+		END = '\033[0m'
+
 print str(datetime.datetime.now())+' :: Loading config information...'
 user_config = Config()
 
@@ -55,15 +67,14 @@ def nvramWrite(iOSSession, generator, binaryFileName=None):
 
 	print str(datetime.datetime.now())+' :: Running nonceEnabler...'
 	stdin, stdout, stderr = iOSSession.ssh.exec_command('./'+binaryFileName)
-	print str(stdout.read()) #change color to indicate this is the console of ios
+	print color.CYAN+str(stdout.read())+color.END
 
 	print str(datetime.datetime.now())+' :: Setting nvram generator variable for boot-nonce...'
 	iOSSession.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
 
 	print str(datetime.datetime.now())+' :: Ensuring nvram variable was written...'
 	stdin, stdout, stderr = iOSSession.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
-	for i in stdout.readlines():
-		print i, # assert that the variable written matches the generator - change color to indicate this is the console of ios
+	print color.CYAN+str(stdout.read())+color.END # assert that the variable written matches the generator
 
 for line in open(user_config.blobPath, 'r'):
 	if '<string>0x' in line: # ensure that each generator follows the same pattern (hex 0x and xml-esque <>__<>)
