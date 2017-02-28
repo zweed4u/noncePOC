@@ -77,7 +77,7 @@ def nvramWrite(iOSSession, generator, binaryFileName=None):
 	print color.CYAN+nvramOutput+color.END # assert that the variable written matches the generator
 	nvramVar = nvramOutput.split('com.apple.System.boot-nonce')[1].split('\t')[1].split('\n')[0]
 	assert nvramVar == generator, "Error Message: Expected ["+generator+"] but ["+nvramVar+"] was written to nvram."
-	print str(datetime.datetime.now())+' :: nvram assertion passed...'
+	print str(datetime.datetime.now())+' :: nvram assertion passed with '+nvramVar+' set as generator.'
 
 for line in open(user_config.blobPath, 'r'):
 	if '<string>0x' in line: # ensure that each generator follows the same pattern (hex 0x and xml-esque <>__<>)
@@ -96,6 +96,7 @@ if user_config.binNeeded.lower() == 'true':
 
 	print str(datetime.datetime.now())+' :: SSHing into device using config vals...'
 	ios_ssh.connect()
+	print str(datetime.datetime.now())+' :: Connected'
 
 	print str(datetime.datetime.now())+' :: SCPing downloaded binary to device...'
 	scp = SCPClient(local_ssh.ssh.get_transport())
@@ -106,24 +107,37 @@ if user_config.binNeeded.lower() == 'true':
 if user_config.runEnabler.lower() == 'true':
 	print str(datetime.datetime.now())+' :: SSHing into device using config vals...'
 	ios_ssh.connect()
+	print str(datetime.datetime.now())+' :: Connected'
 
 	nvramWrite(iOSSession=ios_ssh, generator=generator)
 
-# need to terminate ios ssh session
+ios_ssh.ssh.close()
+
 if user_config.poc.lower() == 'true':
+	print str(datetime.datetime.now())+' :: Making ssh loopback connection for local commands..'
 	local_ssh.connect()
-	bnchNonce = str(local_ssh.ssh.exec_command('img4tool -s '+user_config.blobPath+' | grep BNCH')).split('BNCH: ')[2] #Format - BNCH: BNCH: (NONCE HERE)
+	print str(datetime.datetime.now())+' :: Connected'
+	print str(datetime.datetime.now())+' :: Checking saved shsh2 blobs nonce with img4tool...'
+	stdin, stdout, stderr = local_ssh.ssh.exec_command('img4tool -s '+user_config.blobPath)
+	img4toolOuput=str(stdout.read())
+	print color.CYAN+img4toolOuput+color.END 
+	bnchNonce=img4toolOuput.split('BNCH: ')[2].split('\n')[0]
+
+	print str(datetime.datetime.now())+' :: Extracted nonce from blob: '+bnchNonce
 	print str(datetime.datetime.now())+' :: Connect your idevice in its jailbroken state - nonce should already have been set by enabler'
 	print str(datetime.datetime.now())+' :: Press Enter when device is connected.'
 	raw_input('')
-	deviceNonce = str(local_ssh.ssh.exec_command('sudo noncestatistics -t 1 test.txt | grep ApNonce')).split('=')[1] #log in as root or password will be needed
-	assert deviceNonce == bnchNonce, "Error Message: Nonces do not match!"
 
-# fetch path to blob from config and parse and store generator
-# fetch ssh credentials from config
-# wget nonceEnabler and scp over it to phone fetch path to downloaded file 
-# ssh in and ./nonceEnabler - maybe handle with the last output of the command
-# set nvram var with com.apple.System.boot-nonce=(FETCHED AND PARSED GENERATOR FROM BEFORE)
+	stdin, stdout, stderr = local_ssh.ssh.exec_command('sudo -S noncestatistics -t 1 test.txt',get_pty=True) #maybe grep this with the generator or com.apple.System.boot-nonce
+	stdin.write( user_config.localPass+"\n")
+	stdin.flush()
+	noncestatisticsOutput=str(stdout.read()).split('\n')[3:]
+	for line in noncestatisticsOutput:
+		if 'ApNonce' in line:
+			deviceNonce=line.split('ApNonce=')[1]
+		print color.CYAN+line+color.END 
 
-# POC - version - extend to desktop - sudo noncestatistics -t 1 test.txt | grep ApNonce 
-# assert that the nonce is equal to img4tool -s (FETCHED PATH TO BLOB)) | grep BNCH
+	print str(datetime.datetime.now())+' :: Nonce pulled from device: '+ deviceNonce 
+	print str(datetime.datetime.now())+' :: Nonce pulled from shsh2: '+ bnchNonce 
+	assert str(bnchNonce) in str(deviceNonce), "Error Message: Nonces do not match! Nonce from device is "+deviceNonce+' and nonce of blob used is '+bnchNonce
+	print str(datetime.datetime.now())+' :: nonce assertion passed with '+deviceNonce
