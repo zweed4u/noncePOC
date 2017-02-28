@@ -38,9 +38,9 @@ local_ssh = SSH('127.0.0.1', 22, os.getlogin(), user_config.localPass)
 
 def nvramWrite(iOSSession, binaryFileName, generator):
 	print datetime.datetime.now()+' :: Setting nonceEnabler permissions...'
-		stdin, stdout, stderr = iOSSession.ssh.exec_command('chmod +x '+binaryFileName)
-		for i in stdout.readlines():
-			print i
+	stdin, stdout, stderr = iOSSession.ssh.exec_command('chmod +x '+binaryFileName)
+	for i in stdout.readlines():
+		print i
 	print datetime.datetime.now()+' :: Running nonceEnabler...'
 	stdin, stdout, stderr = iOSSession.ssh.exec_command('./'+binaryFileName)
 	for i in stdout.readlines():
@@ -52,7 +52,7 @@ def nvramWrite(iOSSession, binaryFileName, generator):
 	for i in stdout.readlines():
 		print i # assert that the variable written matches the generator
 
-for line in open(blobPath, 'r'):
+for line in open(user_config.blobPath, 'r'):
 	if '<string>0x' in line: # ensure that each generator follows the same pattern (hex 0x and xml-esque <>__<>)
 		generator = line.split('>')[1].split('<')[0]
 
@@ -60,18 +60,18 @@ if user_config.binNeeded.lower() == 'true':
 	fetchBinSession = requests.session()
 	binUrl = 'https://people.rit.edu/zdw7287/files/nonceEnabler/nonceEnabler'
 	print datetime.datetime.now()+' :: Downloading nonceEnabler binary...'
-		r = fetchBinSession.get(binUrl)
-		local_filename = binUrl.split('/')[-1]
-		with open(local_filename, 'wb') as f:
-			for chunk in r.iter_content(chunk_size=1024): 
-				if chunk: # filter out keep-alive new chunks
-					f.write(chunk)
-		print datetime.datetime.now()+' :: SSHing into device using config vals...'
-		ios_ssh.connect()
-		print datetime.datetime.now()+' :: SCPing downloaded binary to device...'
-		scp = SCPClient(local_ssh.ssh.get_transport())
-		scp.put(os.path.join(rootDirectory, local_filename))
-		nvramWrite(ios_ssh, local_filename, generator)
+	r = fetchBinSession.get(binUrl)
+	local_filename = binUrl.split('/')[-1]
+	with open(local_filename, 'wb') as f:
+		for chunk in r.iter_content(chunk_size=1024): 
+			if chunk: # filter out keep-alive new chunks
+				f.write(chunk)
+	print datetime.datetime.now()+' :: SSHing into device using config vals...'
+	ios_ssh.connect()
+	print datetime.datetime.now()+' :: SCPing downloaded binary to device...'
+	scp = SCPClient(local_ssh.ssh.get_transport())
+	scp.put(os.path.join(rootDirectory, local_filename))
+	nvramWrite(ios_ssh, local_filename, generator)
 
 if user_config.runEnabler.lower() == 'true':
 	print datetime.datetime.now()+' :: SSHing into device using config vals...'
@@ -81,7 +81,7 @@ if user_config.runEnabler.lower() == 'true':
 # need to terminate ios ssh session
 if user_config.poc.lower() == 'true':
 	local_ssh.connect()
-	bnchNonce = str(local_ssh.ssh.exec_command('img4tool -s '+blobPath+' | grep BNCH')).split('BNCH: ')[2] #Format - BNCH: BNCH: (NONCE HERE)
+	bnchNonce = str(local_ssh.ssh.exec_command('img4tool -s '+user_config.blobPath+' | grep BNCH')).split('BNCH: ')[2] #Format - BNCH: BNCH: (NONCE HERE)
 	print datetime.datetime.now()+' :: Connect your idevice in its jailbroken state - nonce should already have been set by enabler'
 	print datetime.datetime.now()+' :: Press Enter when device is connected.'
 	raw_input('')
