@@ -72,7 +72,7 @@ def nvramWrite(iOSSession, generator, binaryFileName=None):
 	iOSSession.ssh.exec_command('nvram com.apple.System.boot-nonce='+generator)
 
 	print str(datetime.datetime.now())+' :: Ensuring nvram variable was written...'
-	stdin, stdout, stderr = iOSSession.ssh.exec_command('nvram -p') #maybe grep this with the generator or com.apple.System.boot-nonce
+	stdin, stdout, stderr = iOSSession.ssh.exec_command('nvram -p')
 	nvramOutput=str(stdout.read())
 	print color.CYAN+nvramOutput+color.END # assert that the variable written matches the generator
 	nvramVar = nvramOutput.split('com.apple.System.boot-nonce')[1].split('\t')[1].split('\n')[0]
@@ -128,7 +128,7 @@ if user_config.poc.lower() == 'true':
 	print str(datetime.datetime.now())+' :: Press Enter when device is connected.'
 	raw_input('')
 
-	stdin, stdout, stderr = local_ssh.ssh.exec_command('sudo -S noncestatistics -t 1 test.txt',get_pty=True) #maybe grep this with the generator or com.apple.System.boot-nonce
+	stdin, stdout, stderr = local_ssh.ssh.exec_command('sudo -S noncestatistics -t 1 test.txt',get_pty=True)
 	stdin.write( user_config.localPass+"\n")
 	stdin.flush()
 	noncestatisticsOutput=str(stdout.read()).split('\n')[3:]
@@ -141,3 +141,5 @@ if user_config.poc.lower() == 'true':
 	print str(datetime.datetime.now())+' :: Nonce pulled from shsh2:  '+ bnchNonce 
 	assert str(bnchNonce) in str(deviceNonce), "Error Message: Nonces do not match! Nonce from device is "+deviceNonce+' and nonce of blob used is '+bnchNonce
 	print str(datetime.datetime.now())+' :: nonce assertion passed with '+deviceNonce
+	print str(datetime.datetime.now())+' :: Housekeeping - deleting generated text file...'
+	local_ssh.ssh.exec_command('sudo -S rm ~/test.txt',get_pty=True)
