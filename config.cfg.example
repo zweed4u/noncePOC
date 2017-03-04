@@ -4,7 +4,7 @@
 pathToBlob = /home/JohnDoe/Desktop/SHSH2/myblob.shsh2 #Full path to shsh2 file
 
 [nonce]
-debNeeded = False #Used to determine if nonceEnabler is needed to be downloaded and put on your device
+debNeeded = False #Used to determine if ios-kern-utils deb is needed to be downloaded and put on your device
 runPatch = True #Used to determine if you need to run nvpatcher and set your generator in your nvram - this will almost always be true
 
 [ssh]
