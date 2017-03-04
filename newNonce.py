@@ -17,8 +17,8 @@ c.read(configFilePath)
 class Config:
     # Pull user info 
     blobPath = c.get('shsh2', 'pathToBlob')
-    binNeeded = c.get('nonce','binNeeded')
-    runEnabler = c.get('nonce','runEnabler')
+    debNeeded = c.get('nonce','debNeeded')
+    runPatch = c.get('nonce','runPatch')
     iosIp = c.get('ssh', 'iosIp')
     iosSshPass = c.get('ssh','iosPassword')
     localPass = c.get('ssh','localPassword')
@@ -50,7 +50,7 @@ class color:
 print str(datetime.datetime.now())+' :: Loading config information...'
 user_config = Config()
 
-if user_config.binNeeded.lower() == 'false': #Run dpkg command piped with grep of ios-kern-utils to ensure it is installed
+if user_config.debNeeded.lower() == 'false': #Run dpkg command piped with grep of ios-kern-utils to ensure it is installed
 	print 'Ensure that the proper deb package is installed'
 	raw_input('')
 
@@ -95,10 +95,10 @@ print str(datetime.datetime.now())+' :: SSHing into device using config vals...'
 ios_ssh.connect()
 print str(datetime.datetime.now())+' :: Connected'
 
-if user_config.binNeeded.lower() == 'true':
+if user_config.debNeeded.lower() == 'true':
 	installIOSKernUtils(iOSSession=ios_ssh)
 	
-if user_config.runEnabler.lower() == 'true':
+if user_config.runPatch.lower() == 'true':
 	nvramWrite(iOSSession=ios_ssh, generator=generator)
 
 ios_ssh.ssh.close()

@@ -4,8 +4,8 @@
 pathToBlob = /home/JohnDoe/Desktop/SHSH2/myblob.shsh2 #Full path to shsh2 file
 
 [nonce]
-binNeeded = False #Used to determine if nonceEnabler is needed to be downloaded and put on your device
-runEnabler = True #Used to determine if you need to run nonceEnabler and set your generator in your nvram - this will almost always be true
+debNeeded = False #Used to determine if nonceEnabler is needed to be downloaded and put on your device
+runPatch = True #Used to determine if you need to run nvpatcher and set your generator in your nvram - this will almost always be true
 
 [ssh]
 iosIp = #192.168.0.1 (phone ip address) Preferences > Wi-Fi > (i) > IP Address
